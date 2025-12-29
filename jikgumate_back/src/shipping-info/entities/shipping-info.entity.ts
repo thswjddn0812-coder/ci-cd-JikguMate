@@ -11,7 +11,7 @@ import { Orders } from '../../orders/entities/order.entity';
 @Index('order_id', ['orderId'], { unique: true })
 @Entity('Shipping_Info')
 export class ShippingInfo {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'shipping_id' })
   shippingId: number;
 
   @Column('int', { name: 'order_id', unique: true })

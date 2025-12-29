@@ -13,7 +13,7 @@ import { Products } from '../../products/entities/product.entity';
 @Index('fk_item_product', ['productId'], {})
 @Entity('Order_Items')
 export class OrderItems {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'order_item_id' })
   orderItemId: number;
 
   @Column('int', { name: 'order_id' })
