@@ -2,38 +2,72 @@ import {
   Controller,
   Post,
   Body,
+  HttpCode,
+  HttpStatus,
   Res,
-  UnauthorizedException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 import type { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('login')
-  async login(@Body() req: any, @Res({ passthrough: true }) res: Response) {
-    // 실제로는 Guard를 사용하여 req.user를 가져오는 것이 좋으나,
-    // 요청사항에 맞게 간단히 구현하기 위해 Body에서 이메일/비번을 받아 처리하거나
-    // 혹은 LocalGuard를 붙여야 함.
-    // 여기서는 간단히 Service의 validateUser를 호출하고 토큰을 발급하는 흐름으로 작성.
+  @Post('signup')
+  @HttpCode(HttpStatus.CREATED)
+  async signup(@Body() createUserDto: CreateUserDto) {
+    return this.authService.signUp(createUserDto);
+  }
 
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() req: any, @Res({ passthrough: true }) res: Response) {
+    // Note: In a real app, use LocalGuard to validate credentials and populate req.user
+    // Here implementing manual validation for simplicity as per previous context or assuming pre-validation
     const user = await this.authService.validateUser(req.email, req.password);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      res.status(HttpStatus.UNAUTHORIZED).send('Invalid credentials');
+      return;
     }
 
-    const { accessToken, refreshToken } = await this.authService.login(user);
+    const tokens = await this.authService.login(user);
 
-    res.setHeader(
-      'Set-Cookie',
-      this.authService.getCookieWithJwtRefreshToken(refreshToken),
-    );
+    res.cookie('Refresh', tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      // secure: true, // Enable in production with HTTPS
+    });
 
-    return {
-      accessToken,
-      message: 'Login successful',
-    };
+    return { accessToken: tokens.accessToken };
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async logout(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const user = req.user;
+    await this.authService.logout(user.sub);
+    res.clearCookie('Refresh');
+    return true;
+  }
+
+  @Post('refresh')
+  @UseGuards(AuthGuard('jwt-refresh'))
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const user = req.user;
+    // 'refreshToken' is attached to req.user by JwtRefreshStrategy check
+    const tokens = await this.authService.refresh(user.sub, user.refreshToken);
+
+    res.cookie('Refresh', tokens.refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { accessToken: tokens.accessToken };
   }
 }
