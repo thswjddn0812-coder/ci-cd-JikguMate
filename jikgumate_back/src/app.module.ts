@@ -18,7 +18,7 @@ import { AuthModule } from './auth/auth.module';
       port: 4000,
       username: '14f9gVFKUUeCkMd.root',
       password: 'MkoGnJrMTAgtLn0R',
-      database: 'login',
+      database: 'JikguMate',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false, // 주의: 개발 환경에서만 true (테이블 자동 생성)
       ssl: {

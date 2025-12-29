@@ -11,7 +11,7 @@ import { RefreshTokens } from '../../refresh-tokens/entities/refresh-token.entit
 @Index('email', ['email'], { unique: true })
 @Entity('Users')
 export class Users {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'user_id' })
   userId: number;
 
   @Column('varchar', { name: 'email', unique: true, length: 100 })

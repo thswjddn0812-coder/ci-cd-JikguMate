@@ -11,7 +11,7 @@ import { Users } from '../../users/entities/user.entity';
 @Index('fk_token_user', ['userId'], {})
 @Entity('Refresh_Tokens')
 export class RefreshTokens {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'token_id' })
   tokenId: number;
 
   @Column('int', { name: 'user_id' })

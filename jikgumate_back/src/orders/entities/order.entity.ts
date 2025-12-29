@@ -15,7 +15,7 @@ import { ShippingInfo } from '../../shipping-info/entities/shipping-info.entity'
 @Index('fk_order_user', ['userId'], {})
 @Entity('Orders')
 export class Orders {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'order_id' })
   orderId: number;
 
   @Column('int', { name: 'user_id' })

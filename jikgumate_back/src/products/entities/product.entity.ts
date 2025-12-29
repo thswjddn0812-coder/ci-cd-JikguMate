@@ -3,7 +3,7 @@ import { OrderItems } from '../../order-items/entities/order-item.entity';
 
 @Entity('Products')
 export class Products {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
+  @PrimaryGeneratedColumn({ type: 'int', name: 'product_id' })
   productId: number;
 
   @Column('text', { name: 'original_url', nullable: true })
