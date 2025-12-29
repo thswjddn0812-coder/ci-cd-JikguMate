@@ -1,15 +1,32 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { RefreshTokensService } from '../refresh-tokens/refresh-tokens.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { JwtConstants } from './constants';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
+    private refreshTokensService: RefreshTokensService,
     private jwtService: JwtService,
   ) {}
+
+  async signUp(createUserDto: CreateUserDto) {
+    const hash = await bcrypt.hash(createUserDto.password, 10);
+    const newUser = await this.usersService.create({
+      ...createUserDto,
+      password: hash,
+    });
+    const tokens = await this.getTokens(newUser.userId, newUser.email);
+    await this.updateRefreshTokens(newUser.userId, tokens.refreshToken);
+    return tokens;
+  }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
@@ -21,26 +38,54 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
-    const accessToken = this.jwtService.sign(payload, {
-      secret: JwtConstants.secret,
-      expiresIn: '15m',
-    });
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: JwtConstants.refreshSecret,
-      expiresIn: '7d',
-    });
-
-    await this.usersService.updateRefreshToken(user.id, refreshToken);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
+    const tokens = await this.getTokens(user.userId, user.email);
+    await this.updateRefreshTokens(user.userId, tokens.refreshToken);
+    return tokens;
   }
 
-  getCookieWithJwtRefreshToken(refreshToken: string) {
-    const cookie = `Refresh=${refreshToken}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60 * 1000}`;
-    return cookie;
+  async logout(userId: number) {
+    await this.usersService.updateHashedRefreshToken(userId, null);
+    await this.refreshTokensService.removeByUserId(userId);
+  }
+
+  async refresh(userId: number, rt: string) {
+    const user = await this.usersService.findOne(userId);
+    if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
+
+    const rtMatches = await bcrypt.compare(rt, user.hashedRt);
+    if (!rtMatches) throw new ForbiddenException('Access Denied');
+
+    const rtStored = await this.refreshTokensService.findOneByToken(rt);
+    if (!rtStored)
+      throw new ForbiddenException('Access Denied: Token not found in DB');
+
+    const tokens = await this.getTokens(user.userId, user.email);
+    await this.updateRefreshTokens(user.userId, tokens.refreshToken);
+    return tokens;
+  }
+
+  async updateRefreshTokens(userId: number, rt: string) {
+    const hash = await bcrypt.hash(rt, 10);
+    await this.usersService.updateHashedRefreshToken(userId, hash);
+    await this.refreshTokensService.removeByUserId(userId); // Remove old tokens (optional: keep history?)
+    await this.refreshTokensService.create(userId, rt);
+  }
+
+  async getTokens(userId: number, email: string) {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(
+        { sub: userId, email },
+        { secret: 'at-secret', expiresIn: '15m' }, // TODO: Env
+      ),
+      this.jwtService.signAsync(
+        { sub: userId, email },
+        { secret: 'rt-secret', expiresIn: '7d' }, // TODO: Env
+      ),
+    ]);
+
+    return {
+      accessToken: at,
+      refreshToken: rt,
+    };
   }
 }
