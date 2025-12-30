@@ -6,12 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ShippingInfoService } from './shipping-info.service';
 import { CreateShippingInfoDto } from './dto/create-shipping-info.dto';
 import { UpdateShippingInfoDto } from './dto/update-shipping-info.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-
+import { AdminGuardGuard } from 'src/common/guard/admin-guard.guard';
+@UseGuards(AdminGuardGuard)
 @ApiTags('ShippingInfo')
 @Controller('shipping-info')
 export class ShippingInfoController {

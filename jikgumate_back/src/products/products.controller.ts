@@ -6,12 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-
+import { AdminGuardGuard } from 'src/common/guard/admin-guard.guard';
+@UseGuards(AdminGuardGuard)
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {

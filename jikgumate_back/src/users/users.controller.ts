@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AdminGuardGuard } from 'src/common/guard/admin-guard.guard';
 
 @Controller('users')
 export class UsersController {
@@ -18,8 +20,8 @@ export class UsersController {
 
   @Post()
   @ApiOperation({
-    summary: '회원가입',
-    description: '새로운 사용자를 등록합니다.',
+    summary: '사용자 생성',
+    description: '새로운 사용자를 생성합니다.',
   })
   @ApiResponse({
     status: 201,
@@ -30,6 +32,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @UseGuards(AdminGuardGuard)
   @Get(':id')
   @ApiOperation({
     summary: '사용자 조회',
