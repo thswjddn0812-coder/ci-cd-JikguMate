@@ -3,15 +3,8 @@
 import { useState } from 'react';
 
 export default function WishlistPage() {
-  // 임시 찜 목록 데이터
-  const [wishlistItems, setWishlistItems] = useState([
-    { id: 1, name: '상품 1', price: 15000, image: '이미지' },
-    { id: 2, name: '상품 2', price: 25000, image: '이미지' },
-    { id: 3, name: '상품 3', price: 30000, image: '이미지' },
-    { id: 4, name: '상품 4', price: 45000, image: '이미지' },
-    { id: 5, name: '상품 5', price: 20000, image: '이미지' },
-    { id: 6, name: '상품 6', price: 35000, image: '이미지' },
-  ]);
+  // 백엔드에서 데이터를 가져올 예정
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
   const handleRemoveFromWishlist = (id: number) => {
     setWishlistItems(prev => prev.filter(item => item.id !== id));
